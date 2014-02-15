@@ -1,7 +1,7 @@
 # Service Layer Prototype
 ## Features
 * Stateless authentication
-* Passes requests to champion portal
+* Passes requests to champion portal via same endpoints (thanks in part to nginx)
 
 ## Coming
 * Event queueing
