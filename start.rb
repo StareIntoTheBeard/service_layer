@@ -107,19 +107,20 @@ end
 class API
 
   def self.pass_call(url, body)
-    if body.length > 1
-      response = Net::HTTP.post_form(url, body)
+    if JSON.is_json?(body)
+      Net::HTTP.post_form(url, JSON.parse(body)).value
+    elsif body == ''
+      Net::HTTP.get(url)
     else
-      response = Net::HTTP.get(url)
+      External::Settings::UNAUTH
     end
-    response
   end
 
   def self.pc_url(route)
     URI.parse(External::Settings::PCBase+route.to_s)
   end
 
-  def self.auth_uRL(route = nil)
+  def self.auth_url(route = nil)
     URI.parse(External::Settings::AuthBase+route.to_s)
   end
 
@@ -146,13 +147,9 @@ end
 post '/direct/' do
   @string = request.query_string.to_s.split('?')
   @string = @string[0]
-  @body = request.body.read
-  if @body != ''
-    if Auth.session_exists?(request)
-        API.pass_call(API.pc_url(@string), params)
-    else
-      External::Settings::UNAUTH
-    end
+  @body = request.body.read 
+  if Auth.session_exists?(request)
+      API.pass_call(API.pc_url(@string), @body)
   else
     External::Settings::UNAUTH
   end
