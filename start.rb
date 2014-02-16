@@ -13,8 +13,7 @@ use Rack::Session::Cookie, :key => 'rack.session',
 set :protection, :except => [:http_origin]
 
 before do
-
-  unless ['/sign_in', 'sign_out'].include? request.path_info 
+  unless ['/sign_in', '/sign_out'].include? request.path_info 
     External::Settings::UNAUTH unless Auth.session_exists?(request)
   end
 
@@ -65,7 +64,7 @@ end
 class Auth 
 
   def self.session_exists?(request)
-    true unless request.session['session_id'] == nil && request.session['user'] == nil
+    true unless request.session['user'] == nil
   end
 
   def self.put_session(request, user)
@@ -80,10 +79,11 @@ class Auth
     end
   end
 
-  def self.invalidate_session(request)
+  def self.invalidate_session(request, response)
     request.session.delete(:user)
     request.session.delete(:init)
     request.session.delete(:session_id)
+    response.set_cookie('rack.session', nil)  
   end
 
 
@@ -155,7 +155,7 @@ post '/direct/' do
 end 
 
 post '/sign_out' do
-  Auth.invalidate_session(request)
+  Auth.invalidate_session(request, response)
   false
 end
 
