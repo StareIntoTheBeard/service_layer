@@ -145,8 +145,7 @@ post '/sign_in' do
 end
 
 post '/direct/' do
-  @string = request.query_string.to_s.split('?')
-  @string = @string[0]
+  @string = request.query_string.to_s.split('?')[0]
   @body = request.body.read 
   if Auth.session_exists?(request)
       API.pass_call(API.pc_url(@string), @body)
