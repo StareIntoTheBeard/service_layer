@@ -12,5 +12,4 @@
 * Event queueing
 * User roles
 * Session persistence on device
-
 * Oauth support

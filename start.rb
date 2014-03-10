@@ -5,7 +5,7 @@ require "net/http"
 require "uri"
 require "pg"
 use Rack::Session::Cookie, :key => 'rack.session',
-                           :path => '/',
+                           :path => '*',
                            :expire_after => 2592000,
                            :secret => 'put_a_bird_on_it'
 
@@ -48,6 +48,7 @@ class External
 
     #Statuses
     UNAUTH = 401, 'Unauthorized'
+    PRESIGNED = 200, 'Already signed in.'
   
   end 
 
@@ -64,16 +65,17 @@ end
 class Auth 
 
   def self.session_exists?(request)
-    true unless request.session['user'] == nil
+    request.session['user'] == nil ? false : true
   end
 
   def self.put_session(request, user)
-    request.session['user'] = user[:username]
     userfind = External.query("SELECT 1 FROM users WHERE username = '#{user[:username]}' AND password = '#{user[:password]}';")
     if userfind.cmd_tuples == 1
-      request.session[:init] = true unless session_exists?(request)
-      request.session[:user] = userfind.getvalue(0,0)
-      true
+      unless session_exists?(request)
+        request.session[:init] = true
+        request.session[:user] = userfind.getvalue(0,0)
+        true
+      end
     else 
       false
     end
@@ -134,6 +136,7 @@ end
 
 
 post '/sign_in' do
+  puts session.to_hash.inspect
   body = request.body.read
   if body.length > 0 && JSON.is_json?(body)
     body = JSON.parse body
@@ -145,6 +148,7 @@ post '/sign_in' do
 end
 
 post '/direct/' do
+  puts session.to_hash.inspect
   @string = request.query_string.to_s.split('?')[0]
   @body = request.body.read 
   if Auth.session_exists?(request)
@@ -155,6 +159,7 @@ post '/direct/' do
 end 
 
 post '/sign_out' do
+  puts session.to_hash.inspect
   Auth.invalidate_session(request, response)
   false
 end
