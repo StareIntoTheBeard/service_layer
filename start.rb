@@ -2,6 +2,7 @@ require 'sinatra'
 require 'thin'
 require 'json'
 require "net/http"
+require "timerizer"
 require "uri"
 require "pg"
 use Rack::Session::Cookie, :key => 'rack.session',
@@ -109,13 +110,17 @@ end
 class API
 
   def self.pass_call(url, body)
-    if JSON.is_json?(body)
-      Net::HTTP.post_form(url, JSON.parse(body)).value
-    elsif body == ''
-      Net::HTTP.get(url)
+    if body == ''
+      method = 'GET'
+      results = Net::HTTP.get(url)
+    elsif JSON.is_json?(body)
+      method = 'POST'
+      results = Net::HTTP.post_form(url, JSON.parse(body)).value
     else
-      External::Settings::UNAUTH
+      results = External::Settings::UNAUTH
     end
+    # Sidekiq::Client.push('class' => APIWorker, 'args' => [:url => url, :body => body, :method => method]) if method
+    results
   end
 
   def self.pc_url(route)
@@ -128,39 +133,7 @@ class API
 
 end
 
-## ROUTES ##
-
-post '/me' do
-  session[:user] if Auth.retrieve_user(request)
-end 
+$api
 
 
-post '/sign_in' do
-  puts session.to_hash.inspect
-  body = request.body.read
-  if body.length > 0 && JSON.is_json?(body)
-    body = JSON.parse body
-    user = {:username => body['username'], :password => body['password']}
-    External::Settings::UNAUTH unless Auth.put_session(request, user)
-  else
-    External::Settings::UNAUTH 
-  end
-end
-
-post '/direct/' do
-  puts session.to_hash.inspect
-  @string = request.query_string.to_s.split('?')[0]
-  @body = request.body.read 
-  if Auth.session_exists?(request)
-      API.pass_call(API.pc_url(@string), @body)
-  else
-    External::Settings::UNAUTH
-  end
-end 
-
-post '/sign_out' do
-  puts session.to_hash.inspect
-  Auth.invalidate_session(request, response)
-  false
-end
 
