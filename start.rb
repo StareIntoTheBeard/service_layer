@@ -127,13 +127,13 @@ class API
     URI.parse(External::Settings::AuthBase+route.to_s)
   end
 
-  def self.redis
+  def self.redis(jid)
     job = nil
     Sidekiq.redis do |c|
-      c.subscribe('results') do |ping|
+      c.subscribe(jid) do |ping|
         ping.message do |channel, msg|
           job = msg.to_s
-          c.unsubscribe('results')
+          c.unsubscribe(jid)
         end
       end
     end

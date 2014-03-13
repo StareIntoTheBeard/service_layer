@@ -7,7 +7,7 @@ class APIWorker
     results = API.pass_call(API.pc_url(url), body).force_encoding('UTF-8')
     output = Hash(:jid => self.jid, :results => results)
     Sidekiq.redis do |c|
-      c.publish('results', output )
+      c.publish(self.jid, output )
     end
   end
 end

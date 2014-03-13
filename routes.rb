@@ -24,10 +24,10 @@ post '/direct/' do
   @body = request.body.read 
   if Auth.session_exists?(request)
 
-    APIWorker.perform_async(@string, @body)
+    jid = APIWorker.perform_async(@string, @body)
 
     fiber = Fiber.new do
-      Fiber.yield API.redis
+      Fiber.yield API.redis(jid)
     end
     fiber.resume
 
