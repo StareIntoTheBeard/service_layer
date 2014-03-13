@@ -25,19 +25,14 @@ post '/direct/' do
   if Auth.session_exists?(request)
 
     APIWorker.perform_async(@string, @body)
-    job = nil
 
-    Sidekiq.redis do |c|
-      c.subscribe('results') do |ping|
-        ping.message do |channel, msg|
-          job = msg.to_s
-          c.unsubscribe('results')
-        end
-      end
+    fiber = Fiber.new do
+      Fiber.yield API.redis
     end
+    fiber.resume
 
     #TODO: is eval a risk here?
-    eval(job)[:results]
+    
 
   else
     External::Settings::UNAUTH
