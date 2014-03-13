@@ -24,12 +24,11 @@ post '/direct/' do
   @body = request.body.read 
   if Auth.session_exists?(request)
 
-    results = APIWorker.perform_async(@string, @body)
-   
+    APIWorker.perform_async(@string, @body)
     job = nil
 
     Sidekiq.redis do |c|
-      dump = c.subscribe('results') do |ping|
+      c.subscribe('results') do |ping|
         ping.message do |channel, msg|
           job = msg.to_s
           c.unsubscribe('results')
