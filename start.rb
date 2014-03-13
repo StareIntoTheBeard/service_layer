@@ -137,6 +137,7 @@ class API
         end
       end
     end
+    #TODO: is eval a risk here?
     eval(job)[:results]
   end
 

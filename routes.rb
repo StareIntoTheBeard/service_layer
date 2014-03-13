@@ -30,10 +30,7 @@ post '/direct/' do
       Fiber.yield API.redis(jid)
     end
     fiber.resume
-
-    #TODO: is eval a risk here?
     
-
   else
     External::Settings::UNAUTH
   end
