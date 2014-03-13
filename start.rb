@@ -111,16 +111,12 @@ class API
 
   def self.pass_call(url, body)
     if body == ''
-      method = 'GET'
-      results = Net::HTTP.get(url)
+       Net::HTTP.get(url)
     elsif JSON.is_json?(body)
-      method = 'POST'
-      results = Net::HTTP.post_form(url, JSON.parse(body)).value
+       Net::HTTP.post_form(url, JSON.parse(body)).value
     else
-      results = External::Settings::UNAUTH
+      External::Settings::UNAUTH
     end
-    # Sidekiq::Client.push('class' => APIWorker, 'args' => [:url => url, :body => body, :method => method]) if method
-    results
   end
 
   def self.pc_url(route)
@@ -132,8 +128,6 @@ class API
   end
 
 end
-
-$api
 
 
 
