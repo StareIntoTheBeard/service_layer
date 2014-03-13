@@ -25,12 +25,9 @@ post '/direct/' do
   if Auth.session_exists?(request)
 
     jid = APIWorker.perform_async(@string, @body)
-
-    fiber = Fiber.new do
-      Fiber.yield API.redis(jid)
-    end
-    fiber.resume
     
+    API.redis(jid)
+
   else
     External::Settings::UNAUTH
   end
